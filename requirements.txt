@@ -1,0 +1,49 @@
+# Binance API bağlantısı
+binance-connector
+
+# AI Modelleri için
+tensorflow
+torch
+scikit-learn
+xgboost
+catboost
+fastai
+pandas
+numpy
+
+# Teknik Analiz için
+ta
+talib
+
+# Reinforcement Learning için
+stable-baselines3
+gym
+
+# Haber Analizi için
+vaderSentiment
+transformers
+newsapi-python
+
+# WebSocket işlemleri
+websocket-client
+socketio
+
+# API Bağlantıları
+requests
+ccxt
+
+# Telegram Bot Entegrasyonu
+python-telegram-bot
+
+# Hata Yönetimi
+traceback
+
+# Grafikleme için
+matplotlib
+seaborn
+
+# Monte Carlo Simülasyonu ve GARCH Modeli için
+arch
+
+# Kaggle GPU için
+kaggle
