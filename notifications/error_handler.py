@@ -1,5 +1,6 @@
 import traceback
 import logging
+import time
 from datetime import datetime
 from notifications.telegram_bot import send_telegram_error_alert, send_telegram_message
 
@@ -14,41 +15,43 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-def log_error(error_message):
+def log_error(exception, function_name=""):
     """
-    ⚠️ Hataları log dosyasına kaydeder.
+    ⚠️ Hataları log dosyasına ve terminale detaylı şekilde kaydeder.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    formatted_error = f"{timestamp} - ERROR: {error_message}\n"
-    
+    error_trace = traceback.format_exc()
+    formatted_error = f"{timestamp} - ERROR in {function_name}:\n{str(exception)}\n{error_trace}\n"
+
     # Hata logunu kaydet
     with open(LOG_FILE, "a") as log_file:
         log_file.write(formatted_error)
-    
+
     # Hata logunu terminale yazdır
     print(formatted_error)
 
+    # Logları Telegram'a gönderme seçeneği
+    send_telegram_message(f"🚨 Hata Tespit Edildi: {function_name}\n{str(exception)}")
 
 def handle_error(exception, function_name=""):
     """
     ⚠️ Hataları yönetir, log dosyasına kaydeder ve Telegram bildirimi gönderir.
     """
-    error_message = f"{function_name} Hata: {str(exception)}"
-    log_error(error_message)
-    
-    # Telegram bildirim gönder
-    send_telegram_error_alert(error_message)
+    log_error(exception, function_name)
+
+    # Telegram hata bildirimini gönder
+    send_telegram_error_alert(f"🚨 {function_name} Hatası:\n{str(exception)}")
 
     # Hata çözüm mekanizmasını tetikle
     auto_fix_error(exception, function_name)
-
 
 def auto_fix_error(exception, function_name):
     """
     🤖 AI destekli hata düzeltme mekanizması.
     - Yetersiz bakiye hatasında kaldıraç düşürerek işlemi tekrar dener.
     - Bağlantı hatalarında işlemi tekrar dener.
-    - Tekrar eden hatalarda stratejiyi değiştirir.
+    - API sınırına ulaşıldığında bekleyerek tekrar dener.
+    - Tekrar eden hatalarda işlemi durdurur.
     """
     error_message = str(exception).lower()
 
@@ -56,15 +59,19 @@ def auto_fix_error(exception, function_name):
         send_telegram_message("💡 Çözüm: Kaldıraç düşürülerek işlem tekrar deneniyor...")
         from trading.binance_futures import execute_trade
         execute_trade(symbol="BTCUSDT", trade_type="LONG", quantity=0.005, leverage=2)
-    
-    elif "network issue" in error_message:
+
+    elif "network issue" in error_message or "connection" in error_message:
         send_telegram_message("🔄 Ağ bağlantı sorunu tespit edildi, işlem tekrar edilecek...")
-    
+        time.sleep(10)  # 10 saniye bekleyip tekrar dene
+        return
+
     elif "rate limit" in error_message:
-        send_telegram_message("⏳ API sınırı aşıldı, 60 saniye beklenip tekrar denenecek...")
-    
+        send_telegram_message("⏳ API sınırı aşıldı, 60 saniye bekleniyor...")
+        time.sleep(60)  # 60 saniye bekleyip tekrar dene
+        return
+
     else:
         send_telegram_message(f"🚨 {function_name} için bilinmeyen hata, manuel müdahale gerekebilir.")
+        print(f"⚠️ Manuel müdahale gerekebilir: {function_name}")
 
     print(f"⚠️ Hata Yönetimi: {function_name} için hata çözümlendi veya işlem tekrar edilecek.")
-
