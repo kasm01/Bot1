@@ -1,9 +1,9 @@
-# Binance API bağlantısı
-binance-connector
+# 📌 Binance API Bağlantısı
+binance-connector-python
 
-# AI Modelleri için
-tensorflow>=2.9
-torch>=1.12
+# 📌 AI Modelleri için
+tensorflow>=2.10
+torch>=2.0.0
 scikit-learn
 xgboost
 catboost
@@ -11,40 +11,44 @@ fastai
 pandas
 numpy
 
-# Teknik Analiz için
+# 📌 Teknik Analiz için
 ta
 TA-Lib
+statsmodels
 
-# Reinforcement Learning için
+# 📌 Reinforcement Learning için
 stable-baselines3
-gym
+gym>=0.26.2
 
-# Haber Analizi için
+# 📌 Haber Analizi için
 vaderSentiment
 transformers
 newsapi-python
 
-# WebSocket işlemleri
+# 📌 WebSocket işlemleri
 websocket-client
 python-socketio
 
-# API Bağlantıları
+# 📌 API Bağlantıları
 requests
 ccxt
 
-# Telegram Bot Entegrasyonu
+# 📌 Telegram Bot Entegrasyonu
 python-telegram-bot
 
-# Hata Yönetimi
+# 📌 Hata Yönetimi
 traceback
 
-# Grafikleme için
+# 📌 Grafikleme için
 matplotlib
 seaborn
 
-# Monte Carlo Simülasyonu ve GARCH Modeli için
+# 📌 Monte Carlo Simülasyonu ve GARCH Modeli için
 arch
 
-# Kaggle GPU için
+# 📌 Kaggle GPU için
 kaggle
 
+# 📌 Ekstra Bağımlılıklar
+pip
+wheel
