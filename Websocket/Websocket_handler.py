@@ -1,6 +1,7 @@
 import websocket
 import json
 import threading
+import time
 from trading.binance_futures import execute_trade
 from risk_management.leverage_manager import dynamic_leverage
 from risk_management.stop_loss import calculate_dynamic_stop_loss, calculate_dynamic_take_profit
@@ -13,29 +14,36 @@ def on_message(ws, message):
     """
     WebSocket mesajlarını işleyerek botun işlem stratejisini uygular.
     """
-    data = json.loads(message)
-    price = float(data["p"])  # Güncel işlem fiyatı
+    try:
+        data = json.loads(message)
+        price = float(data["p"])  # Güncel işlem fiyatı
 
-    # AI destekli işlem kararı
-    trade_decision = reinforcement_trade()
+        # AI destekli işlem kararı
+        trade_decision = reinforcement_trade()
 
-    # AI destekli kaldıraç yönetimi
-    volatility = abs(price - float(data["p"])) / price
-    leverage = dynamic_leverage(volatility)
+        # Son fiyat hareketlerinden volatilite hesaplama
+        volatility = abs(float(data["p"]) - price) / price  # Daha doğru volatilite hesaplama
 
-    # AI destekli stop-loss & take-profit hesaplama
-    stop_loss = calculate_dynamic_stop_loss(price, volatility)
-    take_profit = calculate_dynamic_take_profit(price, volatility)
+        # AI destekli kaldıraç yönetimi
+        leverage = dynamic_leverage(volatility)
 
-    if trade_decision == "LONG":
-        execute_trade("BTCUSDT", "LONG", quantity=0.01, leverage=leverage)
-    elif trade_decision == "SHORT":
-        execute_trade("BTCUSDT", "SHORT", quantity=0.01, leverage=leverage)
+        # AI destekli stop-loss & take-profit hesaplama
+        stop_loss = calculate_dynamic_stop_loss(price, volatility)
+        take_profit = calculate_dynamic_take_profit(price, volatility)
 
-    send_telegram_message(
-        f"📈 AI İşlem Kararı: {trade_decision} | Fiyat: {price} | Kaldıraç: {leverage}x"
-        f"\n🛑 Stop-Loss: {stop_loss} | 🎯 Take-Profit: {take_profit}"
-    )
+        if trade_decision == "LONG":
+            execute_trade("BTCUSDT", "LONG", quantity=0.01, leverage=leverage)
+        elif trade_decision == "SHORT":
+            execute_trade("BTCUSDT", "SHORT", quantity=0.01, leverage=leverage)
+
+        send_telegram_message(
+            f"📈 AI İşlem Kararı: {trade_decision} | Fiyat: {price} | Kaldıraç: {leverage}x"
+            f"\n🛑 Stop-Loss: {stop_loss} | 🎯 Take-Profit: {take_profit}"
+        )
+
+    except Exception as e:
+        print(f"⚠️ Hata: {e}")
+        send_telegram_message(f"⚠️ Veri işleme hatası: {e}")
 
 def on_error(ws, error):
     """
@@ -48,9 +56,10 @@ def on_close(ws, close_status_code, close_msg):
     """
     WebSocket bağlantısı kesildiğinde log kaydı yapar ve tekrar başlatır.
     """
-    print("🔌 WebSocket Bağlantısı Kapandı. Tekrar bağlanıyor...")
-    send_telegram_message("🔄 WebSocket Bağlantısı Kapandı! Tekrar başlatılıyor...")
-    start_websocket()
+    print("🔌 WebSocket Bağlantısı Kapandı. 10 saniye içinde tekrar bağlanıyor...")
+    send_telegram_message("🔄 WebSocket Bağlantısı Kapandı! 10 saniye içinde tekrar bağlanıyor...")
+    time.sleep(10)
+    start_websocket()  # Tekrar bağlanmayı sağla
 
 def on_open(ws):
     """
@@ -61,7 +70,7 @@ def on_open(ws):
 
 def start_websocket():
     """
-    Binance WebSocket bağlantısını başlatır ve sürekli çalışmasını sağlar.
+    Binance WebSocket bağlantısını başlatır ve hata durumunda tekrar bağlanır.
     """
     while True:
         try:
@@ -76,7 +85,8 @@ def start_websocket():
         except Exception as e:
             print(f"⚠️ WebSocket Yeniden Başlatılıyor... Hata: {e}")
             send_telegram_message(f"⚠️ WebSocket Yeniden Başlatılıyor... Hata: {e}")
+            time.sleep(10)  # Bağlantıyı tekrar denemeden önce bekleme süresi
 
 # WebSocket'i ayrı bir thread içinde çalıştır
-ws_thread = threading.Thread(target=start_websocket)
+ws_thread = threading.Thread(target=start_websocket, daemon=True)
 ws_thread.start()
