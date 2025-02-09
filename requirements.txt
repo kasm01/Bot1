@@ -2,8 +2,8 @@
 binance-connector
 
 # AI Modelleri için
-tensorflow
-torch
+tensorflow>=2.9
+torch>=1.12
 scikit-learn
 xgboost
 catboost
@@ -13,7 +13,7 @@ numpy
 
 # Teknik Analiz için
 ta
-talib
+TA-Lib
 
 # Reinforcement Learning için
 stable-baselines3
@@ -26,7 +26,7 @@ newsapi-python
 
 # WebSocket işlemleri
 websocket-client
-socketio
+python-socketio
 
 # API Bağlantıları
 requests
@@ -47,3 +47,4 @@ arch
 
 # Kaggle GPU için
 kaggle
+
